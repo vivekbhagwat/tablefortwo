@@ -31,80 +31,92 @@ def main(env,options):
     time.sleep(1)
 
     # 1) get the 1st robot that is inside the loaded scene
-    # 2) assign it to the variable named 'robot'
+    # 2) assign it to the variable named 'robot1'
+    # 3) get the 2nd robot that is inside the loaded scene
+    # 4) assign it to the variable named 'robot2'
     robot1 = env.GetRobots()[0]
     robot2 = env.GetRobots()[1]
 
-    manip = robot.SetActiveManipulator('leftarm_torso') # set the manipulator to leftarm + torso
-    ikmodel = databases.inversekinematics.InverseKinematicsModel(robot,iktype=IkParameterization.Type.Transform6D)
+    manip = robot1.SetActiveManipulator('leftarm_torso') # set the manipulator to leftarm + torso
+    ikmodel = databases.inversekinematics.InverseKinematicsModel(robot1,iktype=IkParameterization.Type.Transform6D)
+    if not ikmodel.load():
+        ikmodel.autogenerate()
+
+    manip = robot2.SetActiveManipulator('leftarm_torso') # set the manipulator to leftarm + torso
+    ikmodel = databases.inversekinematics.InverseKinematicsModel(robot2,iktype=IkParameterization.Type.Transform6D)
     if not ikmodel.load():
         ikmodel.autogenerate()
 
     # create the interface for basic manipulation programs
-    basemanip = interfaces.BaseManipulation(robot,plannername=options.planner)
-    taskprob = interfaces.TaskManipulation(robot,plannername=options.planner)
+    basemanip = interfaces.BaseManipulation(robot1,plannername=options.planner)
+    taskprob = interfaces.TaskManipulation(robot1,plannername=options.planner)
+    basemanip = interfaces.BaseManipulation(robot2,plannername=options.planner)
+    taskprob = interfaces.TaskManipulation(robot2,plannername=options.planner)
 
-    target=env.GetKinBody('TibitsBox1')
+    # moves the robot's arms down towards the body
+    target=env.GetKinBody('Table')
     with env:
         jointnames = ['l_shoulder_lift_joint','l_elbow_flex_joint','l_wrist_flex_joint','r_shoulder_lift_joint','r_elbow_flex_joint','r_wrist_flex_joint']
-        robot.SetActiveDOFs([robot.GetJoint(name).GetDOFIndex() for name in jointnames])
+        robot.SetActiveDOFs([robot1.GetJoint(name).GetDOFIndex() for name in jointnames])
         basemanip.MoveActiveJoints(goal=[1.29023451,-2.32099996,-0.69800004,1.27843491,-2.32100002,-0.69799996])
-    waitrobot(robot)
+    waitrobot(robot1)
 
+    # move robot to the goal location (navigate using the mobile base)
+    # TODO: need to figure out the goal location for each robot (sides of the table)
     print 'move robot base to target'
     with env:
         robot.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
         basemanip.MoveActiveJoints(goal=[2.8,-1.3,0],maxiter=5000,steplength=0.15,maxtries=2)
-    waitrobot(robot)
+    waitrobot(robot1)
 
     taskprob.ReleaseFingers()
-    waitrobot(robot)
+    waitrobot(robot1)
 
     print 'move the arm to the target'
     Tgoal = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
     res = basemanip.MoveToHandPosition(matrices=[Tgoal],seedik=16)
-    waitrobot(robot)
+    waitrobot(robot1)
 
     print 'close fingers until collision'
     taskprob.CloseFingers()
-    waitrobot(robot)
+    waitrobot(robot1)
 
-    print 'move the arm with the target back to the initial position'
-    with env:
-        robot.Grab(target)
-        basemanip.MoveManipulator(goal=[0, 0, 1.29023451, 0, -2.32099996, 0, -0.69800004, 0])
-    waitrobot(robot)
-
-    print 'move the robot to another location'
-    with env:
-        robot.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
-        localgoal = [0,2.4,0]
-        T = robot.GetTransform()
-        goal = dot(T[0:3,0:3],localgoal) + T[0:3,3]
-        with robot:
-            robot.SetActiveDOFValues(goal)
-            incollision = env.CheckCollision(robot)
-            if incollision:
-                print 'goal in collision!!'
-
-    basemanip.MoveActiveJoints(goal=goal,maxiter=5000,steplength=0.15,maxtries=2)
-    waitrobot(robot)
-
-    print 'move the arm to the designated position on another table to place the target down'
-    Tgoal = array([[0,-1,0,3.5],[-1,0,0,1.5],[0,0,-1,0.855],[0,0,0,1]])
-    res = basemanip.MoveToHandPosition(matrices=[Tgoal],seedik=16)
-    waitrobot(robot)
-
-    taskprob.ReleaseFingers(target=target)
-    waitrobot(robot)
-
-    print 'move manipulator to initial position'
-    basemanip.MoveManipulator(goal=[0, 0, 1.29023451, 0, -2.32099996, 0, -0.69800004, 0])
-    waitrobot(robot)
-
-    print 'close fingers until collision'
-    taskprob.CloseFingers()
-    waitrobot(robot)
+#    print 'move the arm with the target back to the initial position'
+#    with env:
+#        robot.Grab(target)
+#        basemanip.MoveManipulator(goal=[0, 0, 1.29023451, 0, -2.32099996, 0, -0.69800004, 0])
+#    waitrobot(robot)
+#
+#    print 'move the robot to another location'
+#    with env:
+#        robot.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
+#        localgoal = [0,2.4,0]
+#        T = robot.GetTransform()
+#        goal = dot(T[0:3,0:3],localgoal) + T[0:3,3]
+#        with robot:
+#            robot.SetActiveDOFValues(goal)
+#            incollision = env.CheckCollision(robot)
+#            if incollision:
+#                print 'goal in collision!!'
+#
+#    basemanip.MoveActiveJoints(goal=goal,maxiter=5000,steplength=0.15,maxtries=2)
+#    waitrobot(robot)
+#
+#    print 'move the arm to the designated position on another table to place the target down'
+#    Tgoal = array([[0,-1,0,3.5],[-1,0,0,1.5],[0,0,-1,0.855],[0,0,0,1]])
+#    res = basemanip.MoveToHandPosition(matrices=[Tgoal],seedik=16)
+#    waitrobot(robot)
+#
+#    taskprob.ReleaseFingers(target=target)
+#    waitrobot(robot)
+#
+#    print 'move manipulator to initial position'
+#    basemanip.MoveManipulator(goal=[0, 0, 1.29023451, 0, -2.32099996, 0, -0.69800004, 0])
+#    waitrobot(robot)
+#
+#    print 'close fingers until collision'
+#    taskprob.CloseFingers()
+#    waitrobot(robot)
 
 from optparse import OptionParser
 from openravepy.misc import OpenRAVEGlobalArguments
