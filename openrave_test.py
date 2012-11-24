@@ -58,48 +58,65 @@ def main(env,options):
     # TODO: need to figure out the goal location for each robot (sides of the table)
     print 'move robot1 base to target'
     with env:
-	robot1.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
-    	basemanip1.MoveActiveJoints(goal=[2.8,-1.3,0],maxiter=5000,steplength=0.15,maxtries=2)
+	robot1.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,0])
+    	basemanip1.MoveActiveJoints(goal=[-1.0,0.2,0],maxiter=5000,steplength=0.15,maxtries=2)
     waitrobot(robot1)
 
     print 'move robot2 base to target'
     with env:
 	robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
-	print 'DOFs on robot2: ' + str(robot2.GetActiveDOF())
-    	basemanip2.MoveActiveJoints(goal=[-3.3,-0.3,0],maxiter=5000,steplength=0.15,maxtries=2)
+    	basemanip2.MoveActiveJoints(goal=[-3.5,0.2,0],maxiter=5000,steplength=0.15,maxtries=2)
     waitrobot(robot2)
 
-    print 'move the arm to the target'
-    Tgoal = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
-    res = basemanip1.MoveToHandPosition(matrices=[Tgoal],seedik=16)
+    # move the robots' arms to the table
+    print 'move robot1 arms to the target'
+    robot1_Tgoal1 = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
+    robot1_Tgoal2 = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
+    basemanip1.MoveToHandPosition(matrices=[robot1_Tgoal1],seedik=16)
     waitrobot(robot1)
+    # set the right arm as active manipulator and move it
+    robot1.SetActiveManipulator('rightarm_torso') # set the manipulator to rightarm + torso
+    basemanip1 = interfaces.BaseManipulation(robot1,plannername=options.planner)
+    basemanip1.MoveToHandPosition(matrices=[robot1_Tgoal2],seedik=16)
+    waitrobot(robot1)
+    
+    print 'move robot2 arms to the target'
+    robot2_Tgoal1 = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
+    robot2_Tgoal2 = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
+    basemanip2.MoveToHandPosition(matrices=[robot2_Tgoal1],seedik=16)
+    waitrobot(robot2)
+    # set the right arm as active manipulator and move it
+    robot2.SetActiveManipulator('rightarm_torso') # set the manipulator to rightarm + torso
+    basemanip2 = interfaces.BaseManipulation(robot2,plannername=options.planner)
+    basemanip2.MoveToHandPosition(matrices=[robot2_Tgoal2],seedik=16)
+    waitrobot(robot2)
 
     print 'close fingers until collision'
     taskprob1.CloseFingers()
     waitrobot(robot1)
 
     target=env.GetKinBody('Table')
-#    print 'move the arm with the target back to the initial position'
-#    with env:
-#        robot.Grab(target)
-#        basemanip.MoveManipulator(goal=[0, 0, 1.29023451, 0, -2.32099996, 0, -0.69800004, 0])
-#    waitrobot(robot)
-#
-#    print 'move the robot to another location'
-#    with env:
-#        robot.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
-#        localgoal = [0,2.4,0]
-#        T = robot.GetTransform()
-#        goal = dot(T[0:3,0:3],localgoal) + T[0:3,3]
-#        with robot:
-#            robot.SetActiveDOFValues(goal)
-#            incollision = env.CheckCollision(robot)
-#            if incollision:
-#                print 'goal in collision!!'
-#
-#    basemanip.MoveActiveJoints(goal=goal,maxiter=5000,steplength=0.15,maxtries=2)
-#    waitrobot(robot)
-#
+    print 'move the arm with the target back to the initial position'
+    with env:
+        robot1.Grab(target)
+        basemanip1.MoveManipulator(goal=[0, 0, 1.29023451, 0, -2.32099996, 0, -0.69800004, 0])
+    waitrobot(robot1)
+
+    print 'move the robot to another location'
+    with env:
+        robot1.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
+        localgoal = [0,2.4,0]
+        T = robot1.GetTransform()
+        goal = dot(T[0:3,0:3],localgoal) + T[0:3,3]
+        with robot1:
+            robot1.SetActiveDOFValues(goal)
+            incollision = env.CheckCollision(robot1)
+            if incollision:
+                print 'goal in collision!!'
+
+    basemanip1.MoveActiveJoints(goal=goal,maxiter=5000,steplength=0.15,maxtries=2)
+    waitrobot(robot1)
+
 #    print 'move the arm to the designated position on another table to place the target down'
 #    Tgoal = array([[0,-1,0,3.5],[-1,0,0,1.5],[0,0,-1,0.855],[0,0,0,1]])
 #    res = basemanip.MoveToHandPosition(matrices=[Tgoal],seedik=16)
