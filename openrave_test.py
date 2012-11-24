@@ -60,14 +60,13 @@ def main(env,options):
     with env:
 	robot1.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
     	basemanip1.MoveActiveJoints(goal=[2.8,-1.3,0],maxiter=5000,steplength=0.15,maxtries=2)
-    taskprob2.ReleaseFingers()
     waitrobot(robot1)
 
     print 'move robot2 base to target'
     with env:
 	robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
-    	basemanip2.MoveActiveJoints(goal=[-0.8,-1.3,0],maxiter=5000,steplength=0.15,maxtries=2)
-    taskprob2.ReleaseFingers()
+	print 'DOFs on robot2: ' + str(robot2.GetActiveDOF())
+    	basemanip2.MoveActiveJoints(goal=[-3.3,-0.3,0],maxiter=5000,steplength=0.15,maxtries=2)
     waitrobot(robot2)
 
     print 'move the arm to the target'
