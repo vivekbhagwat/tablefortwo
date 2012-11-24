@@ -1,15 +1,6 @@
 #!/usr/bin/env python
 """Explicitly specify goals to get a simple navigation and manipulation demo.
 
-.. examplepre-block:: simplemanipulation
-
-Description
------------
-
-This example shows how to string in a navigation and manipulation planner to achieve a simple goto -> grab -> move task.
-
-.. examplepost-block:: simplemanipulation
-
 """
 from __future__ import with_statement # for python 2.5
 
@@ -37,50 +28,58 @@ def main(env,options):
     robot1 = env.GetRobots()[0]
     robot2 = env.GetRobots()[1]
 
-    manip = robot1.SetActiveManipulator('leftarm_torso') # set the manipulator to leftarm + torso
-    ikmodel = databases.inversekinematics.InverseKinematicsModel(robot1,iktype=IkParameterization.Type.Transform6D)
-    if not ikmodel.load():
-        ikmodel.autogenerate()
+    manip1 = robot1.SetActiveManipulator('leftarm_torso') # set the manipulator to leftarm + torso
+    ikmodel1 = databases.inversekinematics.InverseKinematicsModel(robot1,iktype=IkParameterization.Type.Transform6D)
+    if not ikmodel1.load():
+        ikmodel1.autogenerate()
 
-    manip = robot2.SetActiveManipulator('leftarm_torso') # set the manipulator to leftarm + torso
-    ikmodel = databases.inversekinematics.InverseKinematicsModel(robot2,iktype=IkParameterization.Type.Transform6D)
-    if not ikmodel.load():
-        ikmodel.autogenerate()
+    manip2 = robot2.SetActiveManipulator('leftarm_torso') # set the manipulator to leftarm + torso
+    ikmodel2 = databases.inversekinematics.InverseKinematicsModel(robot2,iktype=IkParameterization.Type.Transform6D)
+    if not ikmodel2.load():
+        ikmodel2.autogenerate()
 
     # create the interface for basic manipulation programs
-    basemanip = interfaces.BaseManipulation(robot1,plannername=options.planner)
-    taskprob = interfaces.TaskManipulation(robot1,plannername=options.planner)
-    basemanip = interfaces.BaseManipulation(robot2,plannername=options.planner)
-    taskprob = interfaces.TaskManipulation(robot2,plannername=options.planner)
+    basemanip1 = interfaces.BaseManipulation(robot1,plannername=options.planner)
+    taskprob1 = interfaces.TaskManipulation(robot1,plannername=options.planner)
+    basemanip2 = interfaces.BaseManipulation(robot2,plannername=options.planner)
+    taskprob2 = interfaces.TaskManipulation(robot2,plannername=options.planner)
 
-    # moves the robot's arms down towards the body
-    target=env.GetKinBody('Table')
+    # moves the robots' arms down towards the body
     with env:
         jointnames = ['l_shoulder_lift_joint','l_elbow_flex_joint','l_wrist_flex_joint','r_shoulder_lift_joint','r_elbow_flex_joint','r_wrist_flex_joint']
-        robot.SetActiveDOFs([robot1.GetJoint(name).GetDOFIndex() for name in jointnames])
-        basemanip.MoveActiveJoints(goal=[1.29023451,-2.32099996,-0.69800004,1.27843491,-2.32100002,-0.69799996])
-    waitrobot(robot1)
-
+        goal = [1.29023451,-2.32099996,-0.69800004,1.27843491,-2.32100002,-0.69799996]
+	robot1.SetActiveDOFs([robot1.GetJoint(name).GetDOFIndex() for name in jointnames])
+        robot2.SetActiveDOFs([robot2.GetJoint(name).GetDOFIndex() for name in jointnames])
+        basemanip1.MoveActiveJoints(goal=goal)
+        basemanip2.MoveActiveJoints(goal=goal)
+    waitrobot(robot2)
+    
     # move robot to the goal location (navigate using the mobile base)
     # TODO: need to figure out the goal location for each robot (sides of the table)
-    print 'move robot base to target'
+    print 'move robot1 base to target'
     with env:
-        robot.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
-        basemanip.MoveActiveJoints(goal=[2.8,-1.3,0],maxiter=5000,steplength=0.15,maxtries=2)
+	robot1.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
+    	basemanip1.MoveActiveJoints(goal=[2.8,-1.3,0],maxiter=5000,steplength=0.15,maxtries=2)
+    taskprob2.ReleaseFingers()
     waitrobot(robot1)
 
-    taskprob.ReleaseFingers()
-    waitrobot(robot1)
+    print 'move robot2 base to target'
+    with env:
+	robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
+    	basemanip2.MoveActiveJoints(goal=[-0.8,-1.3,0],maxiter=5000,steplength=0.15,maxtries=2)
+    taskprob2.ReleaseFingers()
+    waitrobot(robot2)
 
     print 'move the arm to the target'
     Tgoal = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
-    res = basemanip.MoveToHandPosition(matrices=[Tgoal],seedik=16)
+    res = basemanip1.MoveToHandPosition(matrices=[Tgoal],seedik=16)
     waitrobot(robot1)
 
     print 'close fingers until collision'
-    taskprob.CloseFingers()
+    taskprob1.CloseFingers()
     waitrobot(robot1)
 
+    target=env.GetKinBody('Table')
 #    print 'move the arm with the target back to the initial position'
 #    with env:
 #        robot.Grab(target)
