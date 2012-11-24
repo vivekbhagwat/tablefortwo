@@ -29,6 +29,38 @@ def getRobotGoal(obj, left=True):
     mult = -1 if left else 1
     return [tableloc[0]+ mult*tableextents[0] + mult*robotbuffer, tableloc[1], 0, 0 if left else 3.14]
 
+#def grabTable(self, table):
+#	"""Moves the arm and manipulator to grasp a table"""
+#	openhandfn = lambda: self.MoveToPosition([-0.7],self.robot.GetActiveManipulator().GetGripperIndices())
+#	TTable = disk.GetTransform()
+#	for ang2 in arange(-pi/2,1.5*pi,0.4):
+#		for ang1 in arange(-0.6,0,0.2):
+#			Tgrasps = self.GetGrasp(TTable, disk.radius, [ang1,ang2]) # get the grasp transform given the two angles
+#			for Tgrasp in Tgrasps: # for each of the grasps
+#				try:
+#					raveLogInfo('opening hand')
+#					openhandfn()
+#					raveLogInfo('moving hand to location')
+#					self.basemanip.MoveToHandPosition(matrices=[Tgrasp],maxtries=1)
+#					self.waitrobot()
+#					raveLogInfo('succeeded so grab the table')
+#					self.taskmanip.CloseFingers()
+#					self.waitrobot()
+#					with self.env:
+#						self.robot.Grab(table)
+#
+#					return True
+#				except planning_error,e:
+#					raveLogWarn(str(e))
+#					with self.env:
+#						self.robot.ReleaseAllGrabbed()
+#						table.Enable(False)
+#					openhandfn()
+#					with self.env:
+#						table.Enable(True)
+#	return False
+
+
 def main(env,options):
     "Main example code."
     # load the environment XML file
@@ -62,15 +94,15 @@ def main(env,options):
     table = env.GetKinBody('Table')
     mug = env.GetKinBody('Mug')
 
-    # moves the robots' arms down towards the body
-    with env:
-        jointnames = ['l_shoulder_lift_joint','l_elbow_flex_joint','l_wrist_flex_joint','r_shoulder_lift_joint','r_elbow_flex_joint','r_wrist_flex_joint']
-        goal = [1.29023451,-2.32099996,-0.69800004,1.27843491,-2.32100002,-0.69799996]
-	robot1.SetActiveDOFs([robot1.GetJoint(name).GetDOFIndex() for name in jointnames])
-        robot2.SetActiveDOFs([robot2.GetJoint(name).GetDOFIndex() for name in jointnames])
-        basemanip1.MoveActiveJoints(goal=goal)
-        basemanip2.MoveActiveJoints(goal=goal)
-    waitrobot(robot2)
+#    # moves the robots' arms down towards the body
+#    with env:
+#        jointnames = ['l_shoulder_lift_joint','l_elbow_flex_joint','l_wrist_flex_joint','r_shoulder_lift_joint','r_elbow_flex_joint','r_wrist_flex_joint']
+#        goal = [1.29023451,-2.32099996,-0.69800004,1.27843491,-2.32100002,-0.69799996]
+#	robot1.SetActiveDOFs([robot1.GetJoint(name).GetDOFIndex() for name in jointnames])
+#        robot2.SetActiveDOFs([robot2.GetJoint(name).GetDOFIndex() for name in jointnames])
+#        basemanip1.MoveActiveJoints(goal=goal)
+#        basemanip2.MoveActiveJoints(goal=goal)
+#    waitrobot(robot2)
     
     # move robot to the goal location (navigate using the mobile base)
     # TODO: need to figure out the goal location for each robot (sides of the table)
