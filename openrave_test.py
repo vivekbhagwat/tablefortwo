@@ -117,6 +117,11 @@ def main(env,options):
     basemanip1.MoveActiveJoints(goal=goal,maxiter=5000,steplength=0.15,maxtries=2)
     waitrobot(robot1)
 
+    links = target.GetLinks()
+    base = links[0] #base for table
+    box = base.getGeometries()[0]
+    dimensions = box.GetBoxExtents()
+#
 #    print 'move the arm to the designated position on another table to place the target down'
 #    Tgoal = array([[0,-1,0,3.5],[-1,0,0,1.5],[0,0,-1,0.855],[0,0,0,1]])
 #    res = basemanip.MoveToHandPosition(matrices=[Tgoal],seedik=16)
