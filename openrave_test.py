@@ -15,10 +15,11 @@ def waitrobot(robot):
     while not robot.GetController().IsDone():
         time.sleep(0.01)
 
-#def getGraspLoc(obj):
-#    """gets the grasp location on a table object"""
-#    tableextents = obj.ComputeAABB().extents()
-#    tableloc = obj.GetConfigurationValues()
+def getGraspLoc(obj):
+    """gets the grasp location on a table object"""
+    tableextents = obj.ComputeAABB().extents()
+    tableloc = obj.GetConfigurationValues()
+    return [tableloc[0] + tableextents[0], tableloc[1], tableloc[2]] 
     
 def getRobotGoal(obj, left=True):
     """gets the robot location left of the goal object"""
@@ -26,7 +27,7 @@ def getRobotGoal(obj, left=True):
     tableloc = obj.GetConfigurationValues()
     robotbuffer = 0.6
     mult = -1 if left else 1
-    return [tableloc[0]+ mult*tableextents[0] + mult*robotbuffer, tableloc[1], 0]
+    return [tableloc[0]+ mult*tableextents[0] + mult*robotbuffer, tableloc[1], 0, 0 if left else 3.14]
 
 def main(env,options):
     "Main example code."
@@ -59,6 +60,7 @@ def main(env,options):
 
     # get the table object
     table = env.GetKinBody('Table')
+    mug = env.GetKinBody('Mug')
 
     # moves the robots' arms down towards the body
     with env:
@@ -74,22 +76,30 @@ def main(env,options):
     # TODO: need to figure out the goal location for each robot (sides of the table)
     print 'move robot1 base to target'
     with env:
-	robot1.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
+	robot1.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.Z|DOFAffine.RotationAxis,[0,0,1])
     	basemanip1.MoveActiveJoints(goal=getRobotGoal(table, True),maxiter=5000,steplength=0.15,maxtries=2)
+    waitrobot(robot1)
+    taskprob1.ReleaseFingers()
     waitrobot(robot1)
 
     print 'move robot2 base to target'
     with env:
-	robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
+	robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.Z|DOFAffine.RotationAxis,[0,0,1])
     	basemanip2.MoveActiveJoints(goal=getRobotGoal(table, False),maxiter=5000,steplength=0.15,maxtries=2)
+    waitrobot(robot2)
+    taskprob2.ReleaseFingers()
     waitrobot(robot2)
 
     # move the robots' arm to the table
     print 'move robot1 arm to the target'
-    robot1_Tgoal1 = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
-    #robot1_Tgoal2 = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
-    basemanip1.MoveToHandPosition(matrices=[robot1_Tgoal1],seedik=16)
-    waitrobot(robot1)
+
+    ikparam = IkParameterization([localtarget,t],IkParameterization.Type.TranslationLocalGlobal6D) 
+    basemanip.MoveToHandPosition(ikparam=ikparam) 
+    
+    b = getGraspLoc(table)
+    robot1_Tgoal1 = array([[1,0,0,b[0]],[0,1,0,b[1]],[0,0,1,b[2]],[0,0,0,1]])
+    basemanip1.MoveToHandPosition(translation=b,seedik=16)
+    waitrobot(robot2)
     # set the right arm as active manipulator and move it
     #robot1.SetActiveManipulator('rightarm_torso') # set the manipulator to rightarm + torso
     #basemanip1 = interfaces.BaseManipulation(robot1,plannername=options.planner)
