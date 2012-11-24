@@ -15,6 +15,19 @@ def waitrobot(robot):
     while not robot.GetController().IsDone():
         time.sleep(0.01)
 
+#def getGraspLoc(obj):
+#    """gets the grasp location on a table object"""
+#    tableextents = obj.ComputeAABB().extents()
+#    tableloc = obj.GetConfigurationValues()
+    
+def getRobotGoal(obj, left=True):
+    """gets the robot location left of the goal object"""
+    tableextents = obj.ComputeAABB().extents()
+    tableloc = obj.GetConfigurationValues()
+    robotbuffer = 0.6
+    mult = -1 if left else 1
+    return [tableloc[0]+ mult*tableextents[0] + mult*robotbuffer, tableloc[1], 0]
+
 def main(env,options):
     "Main example code."
     # load the environment XML file
@@ -44,6 +57,9 @@ def main(env,options):
     basemanip2 = interfaces.BaseManipulation(robot2,plannername=options.planner)
     taskprob2 = interfaces.TaskManipulation(robot2,plannername=options.planner)
 
+    # get the table object
+    table = env.GetKinBody('Table')
+
     # moves the robots' arms down towards the body
     with env:
         jointnames = ['l_shoulder_lift_joint','l_elbow_flex_joint','l_wrist_flex_joint','r_shoulder_lift_joint','r_elbow_flex_joint','r_wrist_flex_joint']
@@ -58,14 +74,14 @@ def main(env,options):
     # TODO: need to figure out the goal location for each robot (sides of the table)
     print 'move robot1 base to target'
     with env:
-	robot1.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,0])
-    	basemanip1.MoveActiveJoints(goal=[-1.0,0.2,0],maxiter=5000,steplength=0.15,maxtries=2)
+	robot1.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
+    	basemanip1.MoveActiveJoints(goal=getRobotGoal(table, True),maxiter=5000,steplength=0.15,maxtries=2)
     waitrobot(robot1)
 
     print 'move robot2 base to target'
     with env:
 	robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
-    	basemanip2.MoveActiveJoints(goal=[-3.5,0.2,0],maxiter=5000,steplength=0.15,maxtries=2)
+    	basemanip2.MoveActiveJoints(goal=getRobotGoal(table, False),maxiter=5000,steplength=0.15,maxtries=2)
     waitrobot(robot2)
 
     # move the robots' arm to the table
@@ -117,10 +133,6 @@ def main(env,options):
     basemanip1.MoveActiveJoints(goal=goal,maxiter=5000,steplength=0.15,maxtries=2)
     waitrobot(robot1)
 
-    links = target.GetLinks()
-    base = links[0] #base for table
-    box = base.getGeometries()[0]
-    dimensions = box.GetBoxExtents()
 #
 #    print 'move the arm to the designated position on another table to place the target down'
 #    Tgoal = array([[0,-1,0,3.5],[-1,0,0,1.5],[0,0,-1,0.855],[0,0,0,1]])
