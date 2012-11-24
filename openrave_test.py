@@ -79,6 +79,11 @@ def main(env,options):
     waitrobot(robot1)
 
     target=env.GetKinBody('Table')
+	links = target.GetLinks()
+	base = links[0] #base for table
+	box = base.getGeometries()[0]
+	dimensions = box.GetBoxExtents()
+	
 #    print 'move the arm with the target back to the initial position'
 #    with env:
 #        robot.Grab(target)
