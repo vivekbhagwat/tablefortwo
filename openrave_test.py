@@ -68,28 +68,28 @@ def main(env,options):
     	basemanip2.MoveActiveJoints(goal=[-3.5,0.2,0],maxiter=5000,steplength=0.15,maxtries=2)
     waitrobot(robot2)
 
-    # move the robots' arms to the table
-    print 'move robot1 arms to the target'
+    # move the robots' arm to the table
+    print 'move robot1 arm to the target'
     robot1_Tgoal1 = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
-    robot1_Tgoal2 = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
+    #robot1_Tgoal2 = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
     basemanip1.MoveToHandPosition(matrices=[robot1_Tgoal1],seedik=16)
     waitrobot(robot1)
     # set the right arm as active manipulator and move it
-    robot1.SetActiveManipulator('rightarm_torso') # set the manipulator to rightarm + torso
-    basemanip1 = interfaces.BaseManipulation(robot1,plannername=options.planner)
-    basemanip1.MoveToHandPosition(matrices=[robot1_Tgoal2],seedik=16)
-    waitrobot(robot1)
+    #robot1.SetActiveManipulator('rightarm_torso') # set the manipulator to rightarm + torso
+    #basemanip1 = interfaces.BaseManipulation(robot1,plannername=options.planner)
+    #basemanip1.MoveToHandPosition(matrices=[robot1_Tgoal2],seedik=16)
+    #waitrobot(robot1)
     
-    print 'move robot2 arms to the target'
+    print 'move robot2 arm to the target'
     robot2_Tgoal1 = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
     robot2_Tgoal2 = array([[0,-1,0,3.5],[-1,0,0,-1.3],[0,0,-1,0.842],[0,0,0,1]])
-    basemanip2.MoveToHandPosition(matrices=[robot2_Tgoal1],seedik=16)
+    #basemanip2.MoveToHandPosition(matrices=[robot2_Tgoal1],seedik=16)
     waitrobot(robot2)
     # set the right arm as active manipulator and move it
-    robot2.SetActiveManipulator('rightarm_torso') # set the manipulator to rightarm + torso
-    basemanip2 = interfaces.BaseManipulation(robot2,plannername=options.planner)
-    basemanip2.MoveToHandPosition(matrices=[robot2_Tgoal2],seedik=16)
-    waitrobot(robot2)
+    #robot2.SetActiveManipulator('rightarm_torso') # set the manipulator to rightarm + torso
+    #basemanip2 = interfaces.BaseManipulation(robot2,plannername=options.planner)
+    #basemanip2.MoveToHandPosition(matrices=[robot2_Tgoal2],seedik=16)
+    #waitrobot(robot2)
 
     print 'close fingers until collision'
     taskprob1.CloseFingers()
