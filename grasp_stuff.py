@@ -72,7 +72,7 @@ def main(env,options):
     robot1 = env.GetRobots()[0]
     robot2 = env.GetRobots()[1]
 
-    manip1 = robot1.SetActiveManipulator('leftarm_torso') # set the manipulator to leftarm + torso
+    manip1 = robot1.SetActiveManipulator('rightarm_torso') # set the manipulator to leftarm + torso
     #freeind = robot1.GetActiveManipulator().GetArmIndices()[3:] 
     ikmodel1 = databases.inversekinematics.InverseKinematicsModel(robot1,iktype=IkParameterization.Type.Transform6D)
     if not ikmodel1.load():
@@ -112,33 +112,43 @@ def main(env,options):
     taskprob2.ReleaseFingers()
     waitrobot(robot2)
 
-    print 'move the arm to the target'
-    Tgoal = array([[1,0,0,0.5],[0,1,0,0.16],[0,0,1,0.86],[0,0,0,1]])
-    res = basemanip2.MoveToHandPosition(matrices=[Tgoal],seedik=16)
-    waitrobot(robot2)
+    print 'move the arms to the target'
+    Tgoal2 = array([[1,0,0,0.8],[0,1,0,-0.14],[0,0,1,0.86],[0,0,0,1]])
+    res = basemanip2.MoveToHandPosition(matrices=[Tgoal2],seedik=16)
+    Tgoal1 = array([[1,0,0,-0.8],[0,1,0,-0.14],[0,0,1,0.86],[0,0,0,1]])
+    res = basemanip1.MoveToHandPosition(matrices=[Tgoal1],seedik=16)
+    waitrobot(robot1)
 
-    print 'orienting hand'
+    print 'orienting hands'
     with env:
         robot2.SetActiveDOFs([robot2.GetJoint('l_wrist_flex_joint').GetDOFIndex(), robot2.GetJoint('l_wrist_roll_joint').GetDOFIndex()])
         basemanip2.MoveActiveJoints(goal=[0.2, 1.1])
-    waitrobot(robot2)
+        robot1.SetActiveDOFs([robot1.GetJoint('r_wrist_flex_joint').GetDOFIndex(), robot1.GetJoint('r_wrist_roll_joint').GetDOFIndex()])
+        basemanip1.MoveActiveJoints(goal=[0.2, 1.1])
+    waitrobot(robot1)
     
     print 'move closer'
     with env:
         robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.Z,[0,0,1])
-        basemanip2.MoveActiveJoints(goal=[1.11,0.416,0.05],maxiter=5000,steplength=0.15,maxtries=2)
-    waitrobot(robot2)
+        basemanip2.MoveActiveJoints(goal=[1.411,0.116,0.05],maxiter=5000,steplength=0.15,maxtries=2)
+        robot1.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.Z,[0,0,1])
+        basemanip1.MoveActiveJoints(goal=[-1.411,0.116,0.05],maxiter=5000,steplength=0.15,maxtries=2)
+    waitrobot(robot1)
 
     print 'close fingers until collision'
     taskprob2.CloseFingers()
+    taskprob1.CloseFingers()
     waitrobot(robot2)
 
-    #target=env.GetKinBody('Table')
-    #print 'move the arm with the target back to the initial position'
-    #with env:
-    #    robot2.Grab(target)
-    #    basemanip2.MoveManipulator(goal=[0, 0, 1.29023451, 0, -2.32099996, 0, -0.69800004, 0])
-    #waitrobot(robot2)
+    target=env.GetKinBody('Table')
+    print 'grab target'
+    with env:
+        robot2.Grab(target)
+        robot1.Grab(target)
+    waitrobot(robot1)
+
+    print robot2.GetGrabbed()
+    print robot1.GetGrabbed()
 
     while True:
         try:
