@@ -91,10 +91,6 @@ def main(env,options):
 
     # get the table object
     table = env.GetKinBody('Table')
-    mug = env.GetKinBody('Mug')
-
-    trans = robot2.GetActiveManipulator().GetEndEffectorTransform()
-    print trans
 
     # moves the robots' arms down towards the body
     print 'moving arms'
@@ -139,6 +135,8 @@ def main(env,options):
     taskprob2.CloseFingers()
     taskprob1.CloseFingers()
     waitrobot(robot2)
+    
+    print 
 
     target=env.GetKinBody('Table')
     print 'grab target'
@@ -147,12 +145,35 @@ def main(env,options):
         robot1.Grab(target)
     waitrobot(robot1)
 
-    print robot2.GetGrabbed()
-    print robot1.GetGrabbed()
+    #print 'try to move hand with object'
+    print 'grab robot1!'
+    with env:
+        robot2.Grab(robot1)
+    waitrobot(robot2)
+
+    print 
+    print 'try to move everything'
+    #with env:
+    #    robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.Z,[0,0,1])
+    #    basemanip2.MoveActiveJoints(goal=[1.455,0.0,0.05],maxiter=5000,steplength=0.15,maxtries=2)
+    #waitrobot(robot2)
+
+    #robot2.ReleaseAllGrabbed()    
+
+    with env:
+        robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.Z,[0,0,1])
+        localgoal = [-1.0,0.9,0]
+        T = robot2.GetTransform()
+        goal = dot(T[0:3,0:3],localgoal) + T[0:3,3]
+        robot2.SetActiveDOFValues(goal)
+        incollision = env.CheckCollision(robot2)
+        if incollision:
+            print 'goal in collision!!'
+    waitrobot(robot2)
 
     while True:
         try:
-             raw_input('Press any key')
+             raw_input('Press Ctrl-D to exit')
         except EOFError:
              break
 
