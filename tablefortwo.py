@@ -16,7 +16,7 @@ def waitrobot(robot):
     while not robot.GetController().IsDone():
         time.sleep(0.01)
 
-def getRobotGoal(obj, left=True):
+def getGoalCoordsNearObj(obj, left=True):
     """gets the robot location near the goal object"""
     tableextents = obj.ComputeAABB().extents()
     tableloc = obj.GetConfigurationValues()
@@ -73,8 +73,8 @@ def main(env, options):
     # move robot to the goal location (navigate using the mobile base)
     print 'move robots to target'
     with env:
-        navigateToGoal(robot1, basemanip1, getRobotGoal(table, True))
-        navigateToGoal(robot2, basemanip2, getRobotGoal(table, False))
+        navigateToGoal(robot1, basemanip1, getGoalCoordsNearObj(table, True))
+        navigateToGoal(robot2, basemanip2, getGoalCoordsNearObj(table, False))
     waitrobot(robot2)
 
     # move robots' arms in towards their bodies
