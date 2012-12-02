@@ -34,7 +34,7 @@ def foldUpArms(robot, basemanip):
     return basemanip.MoveActiveJoints(goal=goal)
 
 def navigateToGoal(robot, basemanip, goal):
-    """ moves the robot's base to a specified goal [x,y,z] """
+    """ moves the robot's base to a specified goal [x,y,z,rotation] """
     robot.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.Z|DOFAffine.RotationAxis,[0,0,1])
     return basemanip.MoveActiveJoints(goal=goal,maxiter=5000,steplength=0.15,maxtries=2)
 
@@ -48,9 +48,9 @@ def moveJointToValue(robot, basemanip, joint, value):
     robot.SetActiveDOFs([robot.GetJoint(joint).GetDOFIndex()])
     return basemanip.MoveActiveJoints(goal=[value])
 
-def main(env,options):
+def main(env, options):
     # load the environment XML file
-    env.Load('twopr2.env.xml')
+    env.Load(options.environment)
     time.sleep(1)
 
     # get the two robots from the environment
@@ -142,14 +142,14 @@ from openravepy.misc import OpenRAVEGlobalArguments
 
 @openravepy.with_destroy
 def run(args=None):
-    """Command-line execution of the example.
-
-    :param args: arguments for script to parse, if not specified will use sys.argv
+    """Command-line execution of the two robot manipulation.
     """
-    parser = OptionParser(description='Explicitly specify goals to get a simple navigation and manipulation demo.', usage='openrave.py --example simplemanipulation [options]')
+    parser = OptionParser(description='Have two robots navigate their environment with a table.', usage='python grasp_stuff.py [options]')
     OpenRAVEGlobalArguments.addOptions(parser)
     parser.add_option('--planner',action="store",type='string',dest='planner',default=None,
                       help='the planner to use')
+    parser.add_option('--environment',action="store",type='string',dest='environment',default='twopr2.env.xml',
+                      help='the environment to use')
     (options, leftargs) = parser.parse_args(args=args)
     OpenRAVEGlobalArguments.parseAndCreateThreadedUser(options,main,defaultviewer=True)
 
