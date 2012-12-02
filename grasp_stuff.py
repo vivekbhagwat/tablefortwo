@@ -11,50 +11,6 @@ if not __openravepy_build_doc__:
     from openravepy import *
     from numpy import *
 
-class FastGrasping:
-    class GraspingException(Exception):
-        def __init__(self,args):
-            self.args=args
-
-    def __init__(self,robot,target):
-        self.robot = robot
-        self.ikmodel = databases.inversekinematics.InverseKinematicsModel(robot=robot,iktype=IkParameterization.Type.Transform6D)
-        if not self.ikmodel.load():
-            self.ikmodel.autogenerate()
-        self.gmodel = databases.grasping.GraspingModel(robot,target)
-        self.gmodel.init(friction=0.4,avoidlinks=[])
-
-    def checkgraspfn(self, contacts,finalconfig,grasp,info):
-        # check if grasp can be reached by robot
-        Tglobalgrasp = self.gmodel.getGlobalGraspTransform(grasp,collisionfree=True)
-        # have to set the preshape since the current robot is at the final grasp!
-        self.gmodel.setPreshape(grasp)
-        sol = self.gmodel.manip.FindIKSolution(Tglobalgrasp,True)
-        if sol is not None:
-            jointvalues = array(finalconfig[0])
-            jointvalues[self.gmodel.manip.GetArmIndices()] = sol
-            raise self.GraspingException([grasp,jointvalues])
-        return True
-
-    def computeGrasp(self):
-        approachrays = self.gmodel.computeBoxApproachRays(delta=0.02,normalanglerange=0.5) # rays to approach object
-        standoffs = [0]
-        # roll discretization
-        rolls = arange(0,2*pi,0.5*pi)
-        # initial preshape for robot is the released fingers
-        with self.gmodel.target:
-            self.gmodel.target.Enable(False)
-            taskmanip = interfaces.TaskManipulation(self.robot)
-            final,traj = taskmanip.ReleaseFingers(execute=False,outputfinal=True)
-            preshapes = array([final])
-        try:
-            self.gmodel.disableallbodies=False
-            self.gmodel.generate(preshapes=preshapes,standoffs=standoffs,rolls=rolls,approachrays=approachrays,checkgraspfn=self.checkgraspfn,graspingnoise=0.01)
-            return None,None # did not find anything
-        except self.GraspingException, e:
-            return e.args
-
-
 def waitrobot(robot):
     """busy wait for robot completion"""
     while not robot.GetController().IsDone():
