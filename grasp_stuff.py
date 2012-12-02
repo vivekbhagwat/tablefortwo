@@ -16,25 +16,30 @@ def waitrobot(robot):
     while not robot.GetController().IsDone():
         time.sleep(0.01)
 
+def getRobotGoal(obj, left=True):
+    """gets the robot location left of the goal object"""
+    tableextents = obj.ComputeAABB().extents()
+    tableloc = obj.GetConfigurationValues()
+    robotxbuffer = 0.855
+    robotybuffer = 0.116
+    mult = -1 if left else 1
+    return [tableloc[0]+ mult*tableextents[0] + mult*robotxbuffer, tableloc[1] + robotybuffer, 0, 0 if left else 3.14]
+
 def main(env,options):
-    "Main example code."
     # load the environment XML file
     env.Load('twopr2.env.xml')
     time.sleep(1)
 
-    # 1) get the 1st robot that is inside the loaded scene
-    # 2) assign it to the variable named 'robot1'
-    # 3) get the 2nd robot that is inside the loaded scene
-    # 4) assign it to the variable named 'robot2'
+    # get the two robots from the environment
     robot1 = env.GetRobots()[0]
     robot2 = env.GetRobots()[1]
 
-    manip1 = robot1.SetActiveManipulator('rightarm_torso') # set the manipulator to leftarm + torso
+    manip1 = robot1.SetActiveManipulator('rightarm_torso') # set robot1's manipulator to leftarm + torso
     ikmodel1 = databases.inversekinematics.InverseKinematicsModel(robot1,iktype=IkParameterization.Type.Transform6D)
     if not ikmodel1.load():
         ikmodel1.autogenerate()
 
-    manip2 = robot2.SetActiveManipulator('leftarm_torso') # set the manipulator to leftarm + torso
+    manip2 = robot2.SetActiveManipulator('leftarm_torso') # set robot2's manipulator to leftarm + torso
     ikmodel2 = databases.inversekinematics.InverseKinematicsModel(robot2,iktype=IkParameterization.Type.Transform6D)
     if not ikmodel2.load():
         ikmodel2.autogenerate()
@@ -47,6 +52,15 @@ def main(env,options):
 
     # get the table object
     table = env.GetKinBody('Table')
+
+    # move robot to the goal location (navigate using the mobile base)
+    print 'move robots to target'
+    with env:
+        robot1.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.Z|DOFAffine.RotationAxis,[0,0,1])
+        basemanip1.MoveActiveJoints(goal=getRobotGoal(table, True),maxiter=5000,steplength=0.15,maxtries=2)
+        robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.Z|DOFAffine.RotationAxis,[0,0,1])
+        basemanip2.MoveActiveJoints(goal=getRobotGoal(table, False),maxiter=5000,steplength=0.15,maxtries=2)
+    waitrobot(robot2)
 
     # moves the robots' arms down towards the body
     print 'moving arms'
@@ -93,14 +107,9 @@ def main(env,options):
     waitrobot(robot2)
 
     target=env.GetKinBody('Table')
-    print 'grab target'
+    print 'grab target and robot1!'
     with env:
         robot2.Grab(target)
-        #robot1.Grab(target)
-    waitrobot(robot2)
-
-    print 'grab robot1!'
-    with env:
         robot2.Grab(robot1)
     waitrobot(robot2)
 
@@ -110,7 +119,6 @@ def main(env,options):
         localgoal = [0, 0.2, math.pi]
         T = robot2.GetTransform()
         goal = dot(T[0:3,0:3],localgoal) + T[0:3,3]
-        print goal
         basemanip2.MoveActiveJoints(goal=goal,maxiter=10,steplength=0.50,maxtries=2)
     waitrobot(robot2)
 
