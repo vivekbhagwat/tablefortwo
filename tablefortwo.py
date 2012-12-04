@@ -84,10 +84,10 @@ def main(env, options):
     manip2 = robot2.SetActiveManipulator('leftarm_torso')
 
     # create the interface for basic manipulation programs
-    basemanip1 = interfaces.BaseManipulation(robot1,plannername=options.planner)
-    basemanip2 = interfaces.BaseManipulation(robot2,plannername=options.planner)
-    taskprob1 = interfaces.TaskManipulation(robot1,plannername=options.planner)
-    taskprob2 = interfaces.TaskManipulation(robot2,plannername=options.planner)
+    basemanip1 = interfaces.BaseManipulation(robot1)
+    basemanip2 = interfaces.BaseManipulation(robot2)
+    taskprob1 = interfaces.TaskManipulation(robot1)
+    taskprob2 = interfaces.TaskManipulation(robot2)
 
     # get the table object
     table = env.GetKinBody('Table')
@@ -95,8 +95,6 @@ def main(env, options):
     # move robot to the goal location (navigate using the mobile base)
     print 'move robots to target'
     with env:
-        print getGoalCoordsNearObj(table, True)
-        print getGoalCoordsNearObj(table, False)
         navigateToGoal(robot1, basemanip1, getGoalCoordsNearObj(table, True))
         navigateToGoal(robot2, basemanip2, getGoalCoordsNearObj(table, False))
     waitrobot(robot2)
@@ -150,7 +148,6 @@ def main(env, options):
     with env:
         robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
         localgoal = [options.x, options.y, options.r]
-        print localgoal
         T = robot2.GetTransform()
         goal = dot(T[0:3,0:3],localgoal) + T[0:3,3]
         basemanip2.MoveActiveJoints(goal=goal,maxiter=10,steplength=0.50,maxtries=2)
@@ -171,8 +168,6 @@ def run(args=None):
     """
     parser = OptionParser(description='Have two robots navigate their environment with a table.', usage='python grasp_stuff.py [options]')
     OpenRAVEGlobalArguments.addOptions(parser)
-    parser.add_option('--planner',action="store",type='string',dest='planner',default=None,
-                      help='the planner to use')
     parser.add_option('--environment',action="store",type='string',dest='environment',default='twopr2.env.xml',
                       help='the environment to use')
     parser.add_option('-x', action="store", type='float', dest='x', default=0.0,
