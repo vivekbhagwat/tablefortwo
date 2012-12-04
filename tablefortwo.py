@@ -23,13 +23,28 @@ def getGoalCoordsNearObj(obj, left=True):
     robotxbuffer = 0.855
     robotybuffer = 0.116
     mult = -1 if left else 1
-    return [tableloc[0]+ mult*tableextents[0] + mult*robotxbuffer, tableloc[1] + robotybuffer, 0, 0 if left else math.pi]
+    xloc = tableloc[0]+ mult*tableextents[0] + mult*robotxbuffer
+    yloc = tableloc[1] + robotybuffer
+    return [xloc, yloc, 0, 0 if left else math.pi]
+
+def getGraspLoc(obj, left=True):
+    """ gets the pre-grasp location near the object """
+    tableextents = obj.ComputeAABB().extents()
+    tableloc = obj.GetConfigurationValues()
+    xbuf = 0.20
+    ybuf = 0.16
+    zbuf = 0.16
+    mult = -1 if left else 1
+    xloc = tableloc[0] + mult*tableextents[0] + mult*xbuf
+    yloc = tableloc[1] - tableextents[1] + ybuf
+    zloc = tableloc[2] + zbuf
+    return [xloc, yloc, zloc]    
 
 def foldUpArms(robot, basemanip):
     """ moves the robot's arms in towards the body """
     jointnames = ['l_shoulder_lift_joint','l_elbow_flex_joint','l_wrist_flex_joint',
                   'r_shoulder_lift_joint','r_elbow_flex_joint','r_wrist_flex_joint']
-    goal = [1.29023451,-2.32099996,0.0,1.27843491,-2.32100002,0.0]
+    goal = [1.29023451, -2.32099996, 0.0, 1.27843491, -2.32100002, 0.0]
     robot.SetActiveDOFs([robot.GetJoint(name).GetDOFIndex() for name in jointnames])
     return basemanip.MoveActiveJoints(goal=goal)
 
@@ -73,6 +88,8 @@ def main(env, options):
     # move robot to the goal location (navigate using the mobile base)
     print 'move robots to target'
     with env:
+        print getGoalCoordsNearObj(table, True)
+        print getGoalCoordsNearObj(table, False)
         navigateToGoal(robot1, basemanip1, getGoalCoordsNearObj(table, True))
         navigateToGoal(robot2, basemanip2, getGoalCoordsNearObj(table, False))
     waitrobot(robot2)
@@ -90,8 +107,8 @@ def main(env, options):
     waitrobot(robot2)
 
     print 'move the arms to the target'
-    reachToPosition(basemanip1, [-0.8, -0.14, 0.91])
-    reachToPosition(basemanip2, [0.8, -0.14, 0.91])
+    reachToPosition(basemanip1, getGraspLoc(table, True))
+    reachToPosition(basemanip2, getGraspLoc(table, False))
     waitrobot(robot2)
 
     print 'orienting hands'
