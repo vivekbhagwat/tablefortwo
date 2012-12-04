@@ -6,6 +6,7 @@ from __future__ import with_statement # for python 2.5
 
 import math
 import openravepy
+import sys
 import time
 if not __openravepy_build_doc__:
     from openravepy import *
@@ -148,7 +149,8 @@ def main(env, options):
     print 'try to move everything'
     with env:
         robot2.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
-        localgoal = [0, 1.0, math.pi]
+        localgoal = [options.x, options.y, options.r]
+        print localgoal
         T = robot2.GetTransform()
         goal = dot(T[0:3,0:3],localgoal) + T[0:3,3]
         basemanip2.MoveActiveJoints(goal=goal,maxiter=10,steplength=0.50,maxtries=2)
@@ -173,8 +175,15 @@ def run(args=None):
                       help='the planner to use')
     parser.add_option('--environment',action="store",type='string',dest='environment',default='twopr2.env.xml',
                       help='the environment to use')
+    parser.add_option('-x', action="store", type='float', dest='x', default=0.0,
+                      help='the x location')
+    parser.add_option('-y', action="store", type='float', dest='y', default=1.0,
+                      help='the y location')
+    parser.add_option('-r', action="store", type='float', dest="r", default=math.pi,
+                      help='the orientation in radians')
+
     (options, leftargs) = parser.parse_args(args=args)
     OpenRAVEGlobalArguments.parseAndCreateThreadedUser(options,main,defaultviewer=True)
 
 if __name__ == "__main__":
-    run()
+    run(sys.argv)
