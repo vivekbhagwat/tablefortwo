@@ -41,8 +41,11 @@ def getGraspLoc(obj, left=True):
     zloc = tableloc[2] + zbuf
     return [xloc, yloc, zloc]    
 
+def getRobotPos(robot):
+    return robot.GetTransform()[0:3,3]
+
 def getFinalGraspPos(robot, left=True):
-    robotpos = robot.GetTransform()[0:3,3]
+    robotpos = getRobotPos(robot)
     mult = 1 if left else -1
     buf = 0.044
     return [robotpos[0] + mult*buf, robotpos[1], robotpos[2], 0 if left else math.pi]
@@ -70,6 +73,9 @@ def moveJointToValue(robot, basemanip, joint, value):
     robot.SetActiveDOFs([robot.GetJoint(joint).GetDOFIndex()])
     return basemanip.MoveActiveJoints(goal=[value])
 
+def getDist(pos1=[0.0,0.0], pos2=[0.0,0.0]):
+    return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
+
 def main(env, options):
     # load the environment XML file
     env.Load(options.environment)
@@ -78,6 +84,7 @@ def main(env, options):
     # get the two robots from the environment
     robot1 = env.GetRobots()[0]
     robot2 = env.GetRobots()[1]
+
 
     # set the robots' active manipulators
     manip1 = robot1.SetActiveManipulator('rightarm_torso')
@@ -100,6 +107,25 @@ def main(env, options):
         navigateToGoal(robot1, basemanip1, getGoalCoordsNearObj(table, True))
         navigateToGoal(robot2, basemanip2, getGoalCoordsNearObj(table, False))
     waitrobot(robot2)
+
+    # robot2 is the leader, make sure leader is closer to goal
+    dist1 = getDist(getRobotPos(robot1)[0:2], [options.x, options.y])
+    dist2 = getDist(getRobotPos(robot2)[0:2], [options.x, options.y])
+    if dist1 < dist2:
+        robot2 = robot1
+        robot1 = env.GetRobots()[1]
+
+        tempmanip = manip1
+        manip1 = manip2
+        manip2 = tempmanip
+
+        tempbasemanip = basemanip1
+        basemanip1 = basemanip2
+        basemanip2 = tempbasemanip
+
+        temptaskprob = taskprob1
+        taskprob1 = taskprob2
+        taskprob2 = temptaskprob
 
     # move robots' arms in towards their bodies
     print 'moving arms'
