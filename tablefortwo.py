@@ -40,6 +40,12 @@ def getGraspLoc(obj, left=True):
     zloc = tableloc[2] + zbuf
     return [xloc, yloc, zloc]    
 
+def getFinalGraspPos(robot, left=True):
+    robotpos = robot.GetTransform()[0:3,3]
+    mult = 1 if left else -1
+    buf = 0.044
+    return [robotpos[0] + mult*buf, robotpos[1], robotpos[2], 0 if left else math.pi]
+
 def foldUpArms(robot, basemanip):
     """ moves the robot's arms in towards the body """
     jointnames = ['l_shoulder_lift_joint','l_elbow_flex_joint','l_wrist_flex_joint',
@@ -123,8 +129,8 @@ def main(env, options):
 
     print 'move closer'
     with env:
-        navigateToGoal(robot1, basemanip1, [-1.411,0.116,0.05,0])
-        navigateToGoal(robot2, basemanip2, [1.411,0.116,0.05,math.pi])
+        navigateToGoal(robot1, basemanip1, getFinalGraspPos(robot1, True))
+        navigateToGoal(robot2, basemanip2, getFinalGraspPos(robot2, False))
     waitrobot(robot2)
 
     print 'close fingers until collision'
