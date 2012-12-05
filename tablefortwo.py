@@ -26,7 +26,7 @@ def getGoalCoordsNearObj(obj, left=True):
     mult = -1 if left else 1
     xloc = tableloc[0]+ mult*tableextents[0] + mult*robotxbuffer
     yloc = tableloc[1] + robotybuffer
-    return [xloc, yloc, 0, 0 if left else math.pi]
+    return [xloc, yloc, 0 if left else math.pi]
 
 def getGraspLoc(obj, left=True):
     """ gets the pre-grasp location near the object """
@@ -48,7 +48,7 @@ def getFinalGraspPos(robot, left=True):
     robotpos = getRobotPos(robot)
     mult = 1 if left else -1
     buf = 0.044
-    return [robotpos[0] + mult*buf, robotpos[1], robotpos[2], 0 if left else math.pi]
+    return [robotpos[0] + mult*buf, robotpos[1], 0 if left else math.pi]
 
 def foldUpArms(robot, basemanip):
     """ moves the robot's arms in towards the body """
@@ -60,7 +60,7 @@ def foldUpArms(robot, basemanip):
 
 def navigateToGoal(robot, basemanip, goal):
     """ moves the robot's base to a specified goal [x,y,z,rotation] """
-    robot.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.Z|DOFAffine.RotationAxis,[0,0,1])
+    robot.SetActiveDOFs([],DOFAffine.X|DOFAffine.Y|DOFAffine.RotationAxis,[0,0,1])
     return basemanip.MoveActiveJoints(goal=goal,maxiter=5000,steplength=0.15,maxtries=2)
 
 def reachToPosition(basemanip, goal):
@@ -98,6 +98,13 @@ def main(env, options):
     # get the table object
     table = env.GetKinBody('Table')
 
+    # move robots' arms in towards their bodies
+    print 'moving arms'
+    with env:
+        foldUpArms(robot1, basemanip1)
+        foldUpArms(robot2, basemanip2)
+    waitrobot(robot2)
+
     # move robot to the goal location (navigate using the mobile base)
     print 'move robots to target'
     with env:
@@ -123,13 +130,6 @@ def main(env, options):
         temptaskprob = taskprob1
         taskprob1 = taskprob2
         taskprob2 = temptaskprob
-
-    # move robots' arms in towards their bodies
-    print 'moving arms'
-    with env:
-        foldUpArms(robot1, basemanip1)
-        foldUpArms(robot2, basemanip2)
-    waitrobot(robot2)
 
     print 'releasing fingers'
     taskprob1.ReleaseFingers()
