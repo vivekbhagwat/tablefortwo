@@ -113,23 +113,24 @@ def main(env, options):
     waitrobot(robot2)
 
     # robot2 is the leader, make sure leader is closer to goal
-    dist1 = getDist(getRobotPos(robot1)[0:2], [options.x, options.y])
-    dist2 = getDist(getRobotPos(robot2)[0:2], [options.x, options.y])
-    if dist1 < dist2:
-        robot2 = robot1
-        robot1 = env.GetRobots()[1]
+    #dist1 = getDist(getRobotPos(robot1)[0:2], [options.x, options.y])
+    #dist2 = getDist(getRobotPos(robot2)[0:2], [options.x, options.y])
+    #if dist1 < dist2:
+    #    temprobot = robot2
+    #    robot2 = robot1
+    #    robot1 = temprobot
 
-        tempmanip = manip1
-        manip1 = manip2
-        manip2 = tempmanip
+    #    tempmanip = manip1
+    #    manip1 = manip2
+    #    manip2 = tempmanip
 
-        tempbasemanip = basemanip1
-        basemanip1 = basemanip2
-        basemanip2 = tempbasemanip
+    #    tempbasemanip = basemanip1
+    #    basemanip1 = basemanip2
+    #    basemanip2 = tempbasemanip
 
-        temptaskprob = taskprob1
-        taskprob1 = taskprob2
-        taskprob2 = temptaskprob
+    #    temptaskprob = taskprob1
+    #    taskprob1 = taskprob2
+    #    taskprob2 = temptaskprob
 
     print 'releasing fingers'
     taskprob1.ReleaseFingers()
