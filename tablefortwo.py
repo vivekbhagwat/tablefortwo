@@ -85,7 +85,6 @@ def main(env, options):
     robot1 = env.GetRobots()[0]
     robot2 = env.GetRobots()[1]
 
-
     # set the robots' active manipulators
     manip1 = robot1.SetActiveManipulator('rightarm_torso')
     manip2 = robot2.SetActiveManipulator('leftarm_torso')
