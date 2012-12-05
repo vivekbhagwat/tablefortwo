@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-"""Explicitly specify goals to get a simple navigation and manipulation demo.
+"""Move two robots to a table object so they can collaboratively navigate with
+   it to a specified goal location. One robot is designated the leader and 
+   performs the navigation around obstacles. 
 
 """
 from __future__ import with_statement # for python 2.5
